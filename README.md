@@ -21,6 +21,6 @@
    
 3. Run the project
 
-```
-$ yarn start
-```
+   ```
+   $ yarn start
+   ```
