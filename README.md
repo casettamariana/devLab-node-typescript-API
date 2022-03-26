@@ -18,3 +18,9 @@
    ```
    $ yarn install
    ```
+   
+3. Run the project
+
+```
+$ yarn start
+```
