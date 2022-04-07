@@ -1,5 +1,5 @@
 import { StormGlassResponseError } from '@src/util/errors/stormGlassResponseError';
-import { AxiosStatic } from 'axios';
+import { AxiosError, AxiosStatic } from 'axios';
 import { ClientRequestError } from '../util/errors/clientRequestError';
 
 export interface StormGlassPointSource {
@@ -32,14 +32,6 @@ export interface ForecastPoint {
   swellPeriod: number;
 }
 
-export interface ProviderResponse {
-  [key: string]: number|string;
-}
-export interface ErrorResponseStormGlass {
-  message: string;
-  response?: ProviderResponse;
-}
-
 export class StormGlass {
   readonly stormGlassAPIParams = `swellDirection,swellHeight,swellPeriod,waveDirection,waveHeight,windDirection,windSpeed`;
   readonly stormGlassAPISource = `noaa`;
@@ -58,7 +50,7 @@ export class StormGlass {
 
       return this.normalizeResponse(response.data);
     } catch (err) {
-      const { message, response } = err as ErrorResponseStormGlass;
+      const { message, response } = err as AxiosError;
 
       if (response?.status) {
         throw new StormGlassResponseError(
