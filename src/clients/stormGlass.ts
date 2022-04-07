@@ -1,4 +1,6 @@
+import { StormGlassResponseError } from '@src/util/errors/stormGlassResponseError';
 import { AxiosStatic } from 'axios';
+import { ClientRequestError } from '../util/errors/clientRequestError';
 
 export interface StormGlassPointSource {
   [key: string]: number;
@@ -30,20 +32,47 @@ export interface ForecastPoint {
   swellPeriod: number;
 }
 
+export interface ProviderResponse {
+  [key: string]: number|string;
+}
+export interface ErrorResponseStormGlass {
+  message: string;
+  response?: ProviderResponse;
+}
+
 export class StormGlass {
   readonly stormGlassAPIParams = `swellDirection,swellHeight,swellPeriod,waveDirection,waveHeight,windDirection,windSpeed`;
   readonly stormGlassAPISource = `noaa`;
   constructor(protected request: AxiosStatic) {}
 
   public async fetchPoints(lat: number, lng: number): Promise<ForecastPoint[]> {
-    const response = await this.request.get<StormGlassForecastResponse>(
-      `https://api.stormglass.io/v2/weather/point?params=${this.stormGlassAPIParams}&source=${this.stormGlassAPISource}&lat=${lat}&lng=${lng}`
-    );
+    try {
+      const response = await this.request.get<StormGlassForecastResponse>(
+        `https://api.stormglass.io/v2/weather/point?params=${this.stormGlassAPIParams}&source=${this.stormGlassAPISource}&lat=${lat}&lng=${lng}`,
+        {
+          headers: {
+            Authorization: 'fake-token',
+          },
+        }
+      );
 
-    return this.normalizeResponse(response.data);
+      return this.normalizeResponse(response.data);
+    } catch (err) {
+      const { message, response } = err as ErrorResponseStormGlass;
+
+      if (response?.status) {
+        throw new StormGlassResponseError(
+          `Error: ${JSON.stringify(response.data)} Code: ${response.status}`
+        );
+      }
+
+      throw new ClientRequestError(message);
+    }
   }
 
-  private normalizeResponse(points: StormGlassForecastResponse): ForecastPoint[] {
+  private normalizeResponse(
+    points: StormGlassForecastResponse
+  ): ForecastPoint[] {
     return points.hours.filter(this.isValidPoint.bind(this)).map((point) => ({
       swellDirection: point.swellDirection[this.stormGlassAPISource],
       swellHeight: point.swellHeight[this.stormGlassAPISource],
@@ -52,7 +81,7 @@ export class StormGlass {
       waveDirection: point.waveDirection[this.stormGlassAPISource],
       waveHeight: point.waveHeight[this.stormGlassAPISource],
       windDirection: point.windDirection[this.stormGlassAPISource],
-      windSpeed: point.windSpeed[this.stormGlassAPISource]
+      windSpeed: point.windSpeed[this.stormGlassAPISource],
     }));
   }
 
