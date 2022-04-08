@@ -1,4 +1,4 @@
-import { InternalError } from "./internal-error";
+import { InternalError } from './internal-error';
 
 export class StormGlassResponseError extends InternalError {
   constructor(message: string) {

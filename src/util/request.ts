@@ -23,7 +23,8 @@ export class Request {
 
   public static isRequestError(error: Error): boolean {
     return !!(
-      (error as ResponseError).response && (error as ResponseError).response?.status
+      (error as ResponseError).response &&
+      (error as ResponseError).response?.status
     );
   }
 
